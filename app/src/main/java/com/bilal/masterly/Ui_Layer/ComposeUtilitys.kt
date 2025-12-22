@@ -1,8 +1,11 @@
 package com.bilal.masterly.Ui_Layer
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -27,53 +31,186 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bilal.masterly.Domain_Layer.Skill
 import com.bilal.masterly.R
-import com.bilal.masterly.viewModel.SkillDetailViewModel
+import com.bilal.masterly.viewModel.TimerViewModel
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun Previewer() {
-    /* val sample = Skill(
-         id = 1,
-         name = "JavaScript Development",
-         hoursCompleted = 1500,
-         hoursTotal = 10000
-     )
+    val sample = Skill(
+        id = 1,
+        name = "JavaScript Development",
+        hoursCompleted = 1500,
+        hoursTotal = 10000
+    )
 
-     MasterlyTheme {
-         // background from theme
-         Surface(
-             modifier = Modifier.fillMaxSize(),
-             color = MaterialTheme.colorScheme.background
-         ) {
-             // center preview
-             Column(modifier = Modifier.padding(16.dp)) {
-                 SkillCard(skill = sample)
-             }
-         }
-     }*/
+    /*MasterlyTheme {
+       // background from theme
+       Surface(
+           modifier = Modifier.fillMaxSize(),
+           color = MaterialTheme.colorScheme.background
+       ) {
+           // center preview
+           Column(modifier = Modifier.padding(16.dp)) {
+               SkillCard(skill = sample)
+           }
+       }
+   }*/
 
 //    TopBar {  }
+//    TimerScreen(sample, { true })
+}
+@Composable
+fun TimerScreen(
+    skill: Skill?,
+    timerVm: TimerViewModel,
+) {
+
+    val timerText = timerVm.timerText.collectAsState().value
+    val isRunning = timerVm.isRunning.collectAsState().value
+
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            // Top header
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = skill?.name.orEmpty(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Practice Session",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+
+            // Center timer
+            Text(
+                text = timerText,
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            // Bottom controls
+            TimerControls(
+                isRunning = isRunning,
+                onPlay = { timerVm.startTimer() },
+                onPause = { timerVm.pauseTimer() },
+                onStop = { timerVm.stopTimer() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 40.dp)
+            )
+        }
+    }
 }
 
+
 @Composable
-fun TimerScreen(skill: Skill?, onBack: () -> Boolean) {
-     Text(text = "Timer Screen" , modifier = Modifier.fillMaxSize().background(Color.White))
+fun TimerControls(
+    isRunning: Boolean,
+    onPlay: () -> Unit,
+    onPause: () -> Unit,
+    onStop: () -> Unit,
+    modifier: Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Stop
+        TimerControlButton(
+            icon = R.drawable.stop_24px,
+            onClick = onStop,
+            size = 56.dp
+        )
+
+        // Play / Pause (primary)
+        TimerControlButton(
+            icon = if (isRunning) R.drawable.pause_24px else R.drawable.play_arrow_24px,
+            onClick = if (isRunning) onPause else onPlay,
+            size = 72.dp,
+            isPrimary = true
+        )
+
+        // Optional: reset / lap / skip
+        TimerControlButton(
+            icon = R.drawable.restart_alt_24px,
+            onClick = { /* reset */ },
+            size = 56.dp
+        )
+    }
+}
+
+
+@Composable
+fun TimerControlButton(
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 64.dp,
+    strokeWidth: Dp = 1.5.dp,
+    isPrimary: Boolean = false
+) {
+    val color = MaterialTheme.colorScheme.primary
+
+    Surface(
+        modifier = modifier.size(size),
+        shape = CircleShape,
+        color = Color.Transparent,
+        border = BorderStroke(
+            strokeWidth,
+            color.copy(alpha = if (isPrimary) 1f else 0.6f)
+        ),
+        tonalElevation = 0.dp
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(if (isPrimary) 28.dp else 24.dp)
+            )
+        }
+    }
 }
 
 @Composable
 fun SkillDetailScreen(skill: Skill?, onBack: () -> Boolean) {
-    Text(text = "SkillDetailScreen Screen" , modifier = Modifier.fillMaxSize().background(Color.White))
+    Text(
+        text = "SkillDetailScreen Screen",
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    )
 
 }
 
@@ -180,7 +317,11 @@ fun AddFirstSkillScreen() {
 }
 
 @Composable
-fun AddSkillSheet(modifier: Modifier = Modifier, onDismiss: () -> Unit , onAddSkill : (Skill) -> Unit) {
+fun AddSkillSheet(
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit,
+    onAddSkill: (Skill) -> Unit
+) {
 
 }
 

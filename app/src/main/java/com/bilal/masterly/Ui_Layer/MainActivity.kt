@@ -1,10 +1,12 @@
 package com.bilal.masterly.Ui_Layer
 
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -36,6 +38,7 @@ import com.bilal.masterly.viewModel.AppViewModel
 import com.bilal.masterly.viewModel.SkillDetailViewModel
 import com.bilal.masterly.viewModel.TimerViewModel
 
+@RequiresApi(Build.VERSION_CODES.R)
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,30 +91,50 @@ class MainActivity : ComponentActivity() {
                                 val skills by appViewModel.skillList.collectAsState()
                                 SkillListScreen(
                                     skills = skills,
-                                    onNavigateToTimer = { id -> navController.navigate(Screen.timer(id)) },
-                                    onNavigateToDetails = { id -> navController.navigate(Screen.detail(id)) },
+                                    onNavigateToTimer = { id ->
+                                        navController.navigate(
+                                            Screen.timer(
+                                                id
+                                            )
+                                        )
+                                    },
+                                    onNavigateToDetails = { id ->
+                                        navController.navigate(
+                                            Screen.detail(
+                                                id
+                                            )
+                                        )
+                                    },
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
 
                             composable(
                                 route = Screen.TimerPattern,
-                                arguments = listOf(navArgument("skillId") { type = NavType.LongType })
+                                arguments = listOf(navArgument("skillId") {
+                                    type = NavType.LongType
+                                })
                             ) { backStackEntry ->
                                 val timerVm: TimerViewModel = viewModel(backStackEntry)
                                 val skill by timerVm.skillFlow.collectAsState(initial = null)
 
 
-                                TimerScreen(skill = skill, onBack = { navController.popBackStack() })
+                                TimerScreen(
+                                    skill = skill,
+                                    timerVm = timerVm)
                             }
 
                             composable(
                                 route = Screen.DetailPattern,
-                                arguments = listOf(navArgument("skillId") { type = NavType.LongType })
+                                arguments = listOf(navArgument("skillId") {
+                                    type = NavType.LongType
+                                })
                             ) { backStackEntry ->
                                 val detailVm: SkillDetailViewModel = viewModel(backStackEntry)
                                 val skill by detailVm.skillFlow.collectAsState(initial = null)
-                                SkillDetailScreen(skill = skill , onBack = { navController.popBackStack() })
+                                SkillDetailScreen(
+                                    skill = skill,
+                                    onBack = { navController.popBackStack() })
                             }
                         }
                     }
