@@ -1,9 +1,11 @@
 package com.bilal.masterly.Ui_Layer
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bilal.masterly.Domain_Layer.Skill
 import com.bilal.masterly.R
+import com.bilal.masterly.viewModel.SkillDetailViewModel
 
 @Preview(showBackground = true)
 @Composable
@@ -60,6 +65,18 @@ private fun Previewer() {
 
 //    TopBar {  }
 }
+
+@Composable
+fun TimerScreen(skill: Skill?, onBack: () -> Boolean) {
+     Text(text = "Timer Screen" , modifier = Modifier.fillMaxSize().background(Color.White))
+}
+
+@Composable
+fun SkillDetailScreen(skill: Skill?, onBack: () -> Boolean) {
+    Text(text = "SkillDetailScreen Screen" , modifier = Modifier.fillMaxSize().background(Color.White))
+
+}
+
 
 @Composable
 fun TopBar(
@@ -170,15 +187,22 @@ fun AddSkillSheet(modifier: Modifier = Modifier, onDismiss: () -> Unit , onAddSk
 @Composable
 fun SkillListScreen(
     skills: List<Skill>,
+    onNavigateToTimer: (Long) -> Unit,
+    onNavigateToDetails: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
     LazyColumn(
         state = listState,
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 80.dp)
     ) {
         items(items = skills, key = { it.id }) { skill ->
-            SkillCard(skill)
+            SkillCard(
+                skill = skill,
+                onCardClick = { clickedSkill -> onNavigateToTimer(clickedSkill.id) },
+                onDetailClick = { clickedSkill -> onNavigateToDetails(clickedSkill.id) }
+            )
         }
     }
 }
@@ -186,6 +210,8 @@ fun SkillListScreen(
 @Composable
 fun SkillCard(
     skill: Skill,
+    onCardClick: (Skill) -> Unit,
+    onDetailClick: (Skill) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -195,6 +221,7 @@ fun SkillCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { onCardClick(skill) }
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // title row
@@ -210,11 +237,13 @@ fun SkillCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                IconButton(onClick = { onDetailClick(skill) }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Open details",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

@@ -25,12 +25,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.bilal.masterly.ui.theme.MasterlyTheme
 import com.bilal.masterly.viewModel.AppViewModel
+import com.bilal.masterly.viewModel.SkillDetailViewModel
+import com.bilal.masterly.viewModel.TimerViewModel
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +86,32 @@ class MainActivity : ComponentActivity() {
 
                             composable("SkillListScreen") {
                                 val skills by appViewModel.skillList.collectAsState()
-                                SkillListScreen(skills = skills)
+                                SkillListScreen(
+                                    skills = skills,
+                                    onNavigateToTimer = { id -> navController.navigate(Screen.timer(id)) },
+                                    onNavigateToDetails = { id -> navController.navigate(Screen.detail(id)) },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+
+                            composable(
+                                route = Screen.TimerPattern,
+                                arguments = listOf(navArgument("skillId") { type = NavType.LongType })
+                            ) { backStackEntry ->
+                                val timerVm: TimerViewModel = viewModel(backStackEntry)
+                                val skill by timerVm.skillFlow.collectAsState(initial = null)
+
+
+                                TimerScreen(skill = skill, onBack = { navController.popBackStack() })
+                            }
+
+                            composable(
+                                route = Screen.DetailPattern,
+                                arguments = listOf(navArgument("skillId") { type = NavType.LongType })
+                            ) { backStackEntry ->
+                                val detailVm: SkillDetailViewModel = viewModel(backStackEntry)
+                                val skill by detailVm.skillFlow.collectAsState(initial = null)
+                                SkillDetailScreen(skill = skill , onBack = { navController.popBackStack() })
                             }
                         }
                     }
