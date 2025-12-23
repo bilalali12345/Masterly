@@ -1,16 +1,17 @@
 package com.bilal.masterly.viewModel
 
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bilal.masterly.Domain_Layer.Skill
+import com.bilal.masterly.TimerService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
@@ -18,15 +19,16 @@ import kotlinx.coroutines.launch
 
 class TimerViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val skillId = savedStateHandle.get<Long>("skillId")!!
-    val skillFlow = flow<Skill> {
-        delay(100)
+    private val _skill = MutableStateFlow(
         Skill(
             id = skillId,
             name = "JavaScript Development",
             hoursCompleted = 1500,
             hoursTotal = 10000
         )
-    }
+    )
+    val skillFlow: StateFlow<Skill> = _skill.asStateFlow()
+
 
     private var timerJob: Job? = null
 
@@ -71,9 +73,19 @@ class TimerViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     fun stopTimer() {
         _isRunning.value = false
         timerJob?.cancel()
+        applyElapsedTimeToSkill(elapsedSeconds.value)
         _elapsedSeconds.value = 0L
     }
 
+    private fun applyElapsedTimeToSkill(seconds: Long) {
+        val current = _skill.value
+
+        val updatedSkill = current.copy(
+            hoursCompleted = current.hoursCompleted + ( seconds / 60 / 60 ).toInt()
+        )
+
+        _skill.value = updatedSkill
+    }
 
 
 

@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val appViewModel: AppViewModel = viewModel()
 
-                val isSingleSkillAdded by appViewModel.isSingleSkillAdded.collectAsState()
+                val navigateToSkillList by appViewModel.navigateToSkillList.collectAsState()
                 var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -78,73 +80,20 @@ class MainActivity : ComponentActivity() {
                         }
                     ) { innerPadding ->
 
-                        NavHost(
+                        AppNavHost(
                             navController = navController,
-                            startDestination = "AddFirstSkillScreen",
+                            appViewModel = appViewModel,
                             modifier = Modifier.padding(innerPadding)
-                        ) {
-                            composable("AddFirstSkillScreen") {
-                                AddFirstSkillScreen()
-                            }
-
-                            composable("SkillListScreen") {
-                                val skills by appViewModel.skillList.collectAsState()
-                                SkillListScreen(
-                                    skills = skills,
-                                    onNavigateToTimer = { id ->
-                                        navController.navigate(
-                                            Screen.timer(
-                                                id
-                                            )
-                                        )
-                                    },
-                                    onNavigateToDetails = { id ->
-                                        navController.navigate(
-                                            Screen.detail(
-                                                id
-                                            )
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
-
-                            composable(
-                                route = Screen.TimerPattern,
-                                arguments = listOf(navArgument("skillId") {
-                                    type = NavType.LongType
-                                })
-                            ) { backStackEntry ->
-                                val timerVm: TimerViewModel = viewModel(backStackEntry)
-                                val skill by timerVm.skillFlow.collectAsState(initial = null)
-
-
-                                TimerScreen(
-                                    skill = skill,
-                                    timerVm = timerVm)
-                            }
-
-                            composable(
-                                route = Screen.DetailPattern,
-                                arguments = listOf(navArgument("skillId") {
-                                    type = NavType.LongType
-                                })
-                            ) { backStackEntry ->
-                                val detailVm: SkillDetailViewModel = viewModel(backStackEntry)
-                                val skill by detailVm.skillFlow.collectAsState(initial = null)
-                                SkillDetailScreen(
-                                    skill = skill,
-                                    onBack = { navController.popBackStack() })
-                            }
-                        }
+                        )
                     }
 
-                    // Navigation side-effect (correct place)
-                    LaunchedEffect(isSingleSkillAdded) {
-                        if (isSingleSkillAdded) {
+
+                    LaunchedEffect(navigateToSkillList) {
+                        if (navigateToSkillList) {
                             navController.navigate("SkillListScreen") {
                                 popUpTo("AddFirstSkillScreen") { inclusive = true }
                             }
+                            appViewModel.consumeNavigation()
                         }
                     }
 

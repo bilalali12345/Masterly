@@ -12,8 +12,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AppViewModel : ViewModel() {
-    private val _isSingleSkillAdded = MutableStateFlow(false)
-    val isSingleSkillAdded: StateFlow<Boolean> = _isSingleSkillAdded.asStateFlow()
+
+    private val _navigateToSkillList = MutableStateFlow(false)
+    val navigateToSkillList: StateFlow<Boolean> = _navigateToSkillList.asStateFlow()
 
     private val _skillList = MutableStateFlow<List<Skill>>(emptyList())
     val skillList: StateFlow<List<Skill>> = _skillList.asStateFlow()
@@ -22,10 +23,17 @@ class AppViewModel : ViewModel() {
 
         viewModelScope.launch {
             _skillList.value = loadSkillsFromDb()
-            _isSingleSkillAdded.value = true
-
+            onFirstSkillAdded()
         }
 
+    }
+
+    fun onFirstSkillAdded() {
+        _navigateToSkillList.value = true
+    }
+
+    fun consumeNavigation() {
+        _navigateToSkillList.value = false
     }
 
     // Simulated DB fetch - replace with repository/db call in real app
@@ -60,13 +68,12 @@ class AppViewModel : ViewModel() {
     // Mutators - update list immutably
     fun addSkill(skill: Skill) {
         _skillList.value = _skillList.value + skill
-        _isSingleSkillAdded.value = true
+        onFirstSkillAdded()
     }
 
     fun removeSkillById(id: Long) {
         _skillList.value = _skillList.value.filterNot { it.id == id }
     }
 
-    fun clearSingleSkillFlag() { _isSingleSkillAdded.value = false }
 
 }
