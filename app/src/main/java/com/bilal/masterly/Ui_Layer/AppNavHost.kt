@@ -6,6 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -20,15 +21,16 @@ import com.bilal.masterly.viewModel.TimerViewModel
 fun AppNavHost(
     navController: NavHostController,
     appViewModel: AppViewModel,
+    startDestination: String,
     modifier: Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = "AddFirstSkillScreen",
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable("AddFirstSkillScreen") {
-            AddFirstSkillScreen()
+            AddFirstSkillScreen( onAddSkillClick = { appViewModel.requestShowAddSkillSheet() })
         }
 
         composable("SkillListScreen") {
@@ -57,6 +59,7 @@ fun AppNavHost(
             route = Screen.TimerPattern,
             arguments = listOf(navArgument("skillId") {
                 type = NavType.LongType
+                nullable = false
             })
         ) { backStackEntry ->
             val timerVm: TimerViewModel = viewModel(backStackEntry)
@@ -72,6 +75,7 @@ fun AppNavHost(
             route = Screen.DetailPattern,
             arguments = listOf(navArgument("skillId") {
                 type = NavType.LongType
+                nullable = false
             })
         ) { backStackEntry ->
             val detailVm: SkillDetailViewModel = viewModel(backStackEntry)

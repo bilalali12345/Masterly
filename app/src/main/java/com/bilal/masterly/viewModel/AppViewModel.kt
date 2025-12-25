@@ -3,37 +3,41 @@ package com.bilal.masterly.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bilal.masterly.Domain_Layer.Skill
+import com.bilal.masterly.Ui_Layer.UiEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AppViewModel : ViewModel() {
 
-    private val _navigateToSkillList = MutableStateFlow(false)
-    val navigateToSkillList: StateFlow<Boolean> = _navigateToSkillList.asStateFlow()
+    private val _uiEvents = MutableSharedFlow<UiEvent>()
+    val uiEvents = _uiEvents.asSharedFlow()
 
     private val _skillList = MutableStateFlow<List<Skill>>(emptyList())
     val skillList: StateFlow<List<Skill>> = _skillList.asStateFlow()
 
+    private val _isInitialized = MutableStateFlow(false)
+    val isInitialized : StateFlow<Boolean> = _isInitialized.asStateFlow()
+
     init {
 
         viewModelScope.launch {
-            _skillList.value = loadSkillsFromDb()
-            onFirstSkillAdded()
+            val list = loadSkillsFromDb()
+            _skillList.value = list
+            _isInitialized.value = true
+
         }
 
     }
 
-    fun onFirstSkillAdded() {
-        _navigateToSkillList.value = true
-    }
-
-    fun consumeNavigation() {
-        _navigateToSkillList.value = false
+    fun requestShowAddSkillSheet() {
+        viewModelScope.launch { _uiEvents.emit(UiEvent.ShowAddSkillSheet) }
     }
 
     // Simulated DB fetch - replace with repository/db call in real app
@@ -65,10 +69,12 @@ class AppViewModel : ViewModel() {
         return@withContext list
     }
 
-    // Mutators - update list immutably
     fun addSkill(skill: Skill) {
-        _skillList.value = _skillList.value + skill
-        onFirstSkillAdded()
+        val wasEmpty = _skillList.value.isEmpty()
+        _skillList.value += skill
+        if (wasEmpty) {
+            viewModelScope.launch { _uiEvents.emit(UiEvent.NavigateToSkillList) }
+        }
     }
 
     fun removeSkillById(id: Long) {

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.ksp)
 }
 
 android {
@@ -67,4 +68,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.room.runtime) {
+        exclude(group = "com.intellij", module = "annotations")
+    }
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.annotationProcessor)
+
 }

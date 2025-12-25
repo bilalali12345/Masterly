@@ -7,10 +7,12 @@ import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,8 +56,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val appViewModel: AppViewModel = viewModel()
 
-                val navigateToSkillList by appViewModel.navigateToSkillList.collectAsState()
                 var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+                val isInitialized by appViewModel.isInitialized.collectAsState()
 
                 val currentBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = currentBackStackEntry?.destination?.route
@@ -63,61 +66,85 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Scaffold(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        topBar = { TopBar() },
-                        floatingActionButton = {
-                            if (currentRoute == "SkillListScreen") {
-                                FloatingActionButton(
-                                    onClick = { showBottomSheet = true }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Add Skill"
-                                    )
-                                }
-                            }
-                        }
-                    ) { innerPadding ->
-
-                        AppNavHost(
-                            navController = navController,
-                            appViewModel = appViewModel,
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    }
-
-
-                    LaunchedEffect(navigateToSkillList) {
-                        if (navigateToSkillList) {
-                            navController.navigate("SkillListScreen") {
-                                popUpTo("AddFirstSkillScreen") { inclusive = true }
-                            }
-                            appViewModel.consumeNavigation()
-                        }
-                    }
-
-                    // Bottom sheet (single owner: App shell)
-                    if (showBottomSheet) {
-                        ModalBottomSheet(
-                            onDismissRequest = { showBottomSheet = false }
+                    if (!isInitialized) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            AddSkillSheet(
-                                onDismiss = { showBottomSheet = false },
-                                onAddSkill = { skill ->
-                                    appViewModel.addSkill(skill)
-                                    showBottomSheet = false
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        Scaffold(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            topBar = { TopBar() },
+                            floatingActionButton = {
+                                if (currentRoute == "SkillListScreen") {
+                                    FloatingActionButton(
+                                        onClick = { appViewModel.requestShowAddSkillSheet() }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Add Skill"
+                                        )
+                                    }
                                 }
+                            }
+                        ) { innerPadding ->
+
+                            // compute startDestination where you already have isInitialized and skills
+                            val skills by appViewModel.skillList.collectAsState()
+                            val startDestination =
+                                if (skills.isEmpty()) "AddFirstSkillScreen" else "SkillListScreen"
+
+                            AppNavHost(
+                                navController = navController,
+                                appViewModel = appViewModel,
+                                startDestination = startDestination,
+                                modifier = Modifier.padding(innerPadding)
                             )
+
+                        }
+
+
+                        LaunchedEffect(Unit) {
+                            appViewModel.uiEvents.collect { event ->
+                                when (event) {
+                                    UiEvent.ShowAddSkillSheet -> {
+                                        showBottomSheet = true
+                                    }
+
+                                    UiEvent.NavigateToSkillList -> {
+                                        navController.navigate("SkillListScreen") {
+                                            popUpTo("AddFirstSkillScreen") { inclusive = true }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Bottom sheet (single owner: App shell)
+                        if (showBottomSheet) {
+                            ModalBottomSheet(
+                                onDismissRequest = { showBottomSheet = false }
+                            ) {
+                                AddSkillSheet(
+                                    onDismiss = { showBottomSheet = false },
+                                    onAddSkill = { skill ->
+                                        appViewModel.addSkill(skill)
+                                        showBottomSheet = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
+
+            window.decorView.post {
+                applyWindowInsets()
+            }
         }
 
-        window.decorView.post {
-            applyWindowInsets()
-        }
     }
 
     private fun applyWindowInsets() {
@@ -129,4 +156,5 @@ class MainActivity : ComponentActivity() {
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
+
 }
