@@ -73,5 +73,6 @@ dependencies {
     }
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.annotationProcessor)
+    implementation(libs.androidx.compose.material.icons.extended)
 
 }

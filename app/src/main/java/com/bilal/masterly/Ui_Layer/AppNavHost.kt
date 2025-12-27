@@ -34,11 +34,11 @@ fun AppNavHost(
         startDestination = startDestination,
         modifier = modifier
     ) {
-        composable("AddFirstSkillScreen") {
+        composable(Screen.AddFirst) {
             AddFirstSkillScreen( onAddSkillClick = { appViewModel.requestShowAddSkillSheet() })
         }
 
-        composable("SkillListScreen") {
+        composable(Screen.SkillList) {
             val skills by appViewModel.skillList.collectAsState()
             SkillListScreen(
                 skills = skills,
@@ -108,5 +108,14 @@ fun AppNavHost(
                 skill = skill,
                 onBack = { navController.popBackStack() })
         }
+
+        composable(Screen.Paywall) {
+            PaywallScreen()
+        }
+
+        composable(Screen.Settings) {
+            SettingsScreen()
+        }
+
     }
 }

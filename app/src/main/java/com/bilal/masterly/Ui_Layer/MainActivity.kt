@@ -165,9 +165,21 @@ class MainActivity : ComponentActivity() {
                     } else {
                         Scaffold(
                             containerColor = MaterialTheme.colorScheme.background,
-                            topBar = { TopBar() },
+                            topBar = {
+                                TopBar(
+                                    onAnalyticsClick = {
+                                        navController.navigate("AnalyticsScreen")
+                                    },
+                                    onSettingsClick = {
+                                        navController.navigate(Screen.Settings)
+                                    },
+                                    onProClick = {
+                                        navController.navigate(Screen.Paywall)
+                                    }
+                                )
+                            },
                             floatingActionButton = {
-                                if (currentRoute == "SkillListScreen") {
+                                if (currentRoute == Screen.SkillList) {
                                     FloatingActionButton(
                                         onClick = { appViewModel.requestShowAddSkillSheet() }
                                     ) {
@@ -183,7 +195,7 @@ class MainActivity : ComponentActivity() {
                             // compute startDestination where you already have isInitialized and skills
                             val skills by appViewModel.skillList.collectAsState()
                             val startDestination =
-                                if (skills.isEmpty()) "AddFirstSkillScreen" else "SkillListScreen"
+                                if (skills.isEmpty()) Screen.AddFirst else Screen.SkillList
 
                             AppNavHost(
                                 navController = navController,
