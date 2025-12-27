@@ -2,6 +2,7 @@ package com.bilal.masterly.Ui_Layer
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,7 +26,8 @@ fun AppNavHost(
     navController: NavHostController,
     appViewModel: AppViewModel,
     startDestination: String,
-    modifier: Modifier
+    modifier: Modifier,
+    onTimerEvent: (UiEvent) -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -66,20 +68,26 @@ fun AppNavHost(
             })
         ) { backStackEntry ->
 
-//            val factory = object : AbstractSavedStateViewModelFactory(backStackEntry, null) {
-//                override fun <T : ViewModel> create(
-//                    key: String, modelClass: Class<T>, handle: SavedStateHandle
-//                ): T {
-//                    if (modelClass.isAssignableFrom(TimerViewModel::class.java)) {
-//                        @Suppress("UNCHECKED_CAST")
-//                        return TimerViewModel(handle) as T
-//                    }
-//                    throw IllegalArgumentException("Unknown ViewModel class")
-//                }
-//            }
+            val factory = object : AbstractSavedStateViewModelFactory(backStackEntry, null) {
+                override fun <T : ViewModel> create(
+                    key: String, modelClass: Class<T>, handle: SavedStateHandle
+                ): T {
+                    if (modelClass.isAssignableFrom(TimerViewModel::class.java)) {
+                        @Suppress("UNCHECKED_CAST")
+                        return TimerViewModel(handle) as T
+                    }
+                    throw IllegalArgumentException("Unknown ViewModel class")
+                }
+            }
 
-            val timerVm = viewModel<TimerViewModel>(viewModelStoreOwner = backStackEntry)
+            val timerVm = viewModel<TimerViewModel>(viewModelStoreOwner = backStackEntry, factory = factory)
             val skill by timerVm.skillFlow.collectAsState(initial = null)
+
+            LaunchedEffect(key1 = timerVm) {
+                timerVm.uiEvents.collect{
+                    onTimerEvent(it)
+                }
+            }
 
 
             TimerScreen(
