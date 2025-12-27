@@ -1,11 +1,17 @@
 package com.bilal.masterly.Ui_Layer
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -38,6 +45,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.bilal.masterly.Notification.TimerService
 import com.bilal.masterly.ui.theme.MasterlyTheme
 import com.bilal.masterly.viewModel.AppViewModel
 import com.bilal.masterly.viewModel.SkillDetailViewModel
@@ -45,6 +53,54 @@ import com.bilal.masterly.viewModel.TimerViewModel
 
 @RequiresApi(Build.VERSION_CODES.R)
 class MainActivity : ComponentActivity() {
+    // holder for one pending action while permission prompt is inflight
+    private var pendingNotificationPermissionAction: ((Context) -> Unit)? = null
+
+    // register launcher once as a property (calls pending action when granted)
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            val pending = pendingNotificationPermissionAction
+            pendingNotificationPermissionAction = null
+
+            if (granted) {
+                // run pending action if any; prefer Activity context
+                pending?.invoke(this)
+            } else {
+                // optional: inform user that permission is required for foreground notifications
+                Toast.makeText(
+                    this,
+                    "Notification permission is required to show the timer notification.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    private fun ensureNotificationPermissionThen(action: (Context) -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (granted) {
+                action(this)
+            } else {
+                // keep pending action and request permission
+                pendingNotificationPermissionAction = action
+
+                // Optional: show rationale before direct request
+                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    // you can show a dialog explaining why you need it; here we simply request
+                }
+
+                requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            // pre-Android 13: no runtime notification permission required
+            action(this)
+        }
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,6 +173,23 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate("SkillListScreen") {
                                             popUpTo("AddFirstSkillScreen") { inclusive = true }
                                         }
+                                    }
+
+                                    UiEvent.RequestStartService -> {
+                                        ensureNotificationPermissionThen { ctx ->
+                                            ContextCompat.startForegroundService(ctx, Intent(
+                                                ctx,
+                                                TimerService::class.java
+                                            ).apply {
+                                                action = TimerService.ACTION_START
+                                            })
+                                        }
+                                    }
+                                    UiEvent.RequestPauseService -> {
+                                        application.startService(Intent(application, TimerService::class.java).apply { action = TimerService.ACTION_PAUSE })
+                                    }
+                                    UiEvent.RequestStopService -> {
+                                        application.startService(Intent(application, TimerService::class.java).apply { action = TimerService.ACTION_STOP })
                                     }
                                 }
                             }

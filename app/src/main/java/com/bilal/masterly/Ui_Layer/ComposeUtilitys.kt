@@ -99,65 +99,6 @@ private fun Previewer() {
     )
 }
 
-@Composable
-fun TimerScreen(
-    skill: Skill?,
-    timerVm: TimerViewModel,
-) {
-
-    val timerText = timerVm.timerText.collectAsState().value
-    val isRunning = timerVm.isRunning.collectAsState().value
-
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-
-            // Top header
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = skill?.name.orEmpty(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Practice Session",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-
-            // Center timer
-            Text(
-                text = timerText,
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.primary,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            // Bottom controls
-            TimerControls(
-                isRunning = isRunning,
-                onPlay = { timerVm.startTimer() },
-                onPause = { timerVm.pauseTimer() },
-                onStop = { timerVm.stopTimer() },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 40.dp)
-            )
-        }
-    }
-}
-
 
 @Composable
 fun TimerControls(
@@ -229,16 +170,7 @@ fun TimerControlButton(
     }
 }
 
-@Composable
-fun SkillDetailScreen(skill: Skill?, onBack: () -> Boolean) {
-    Text(
-        text = "SkillDetailScreen Screen",
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    )
 
-}
 
 
 @Composable
