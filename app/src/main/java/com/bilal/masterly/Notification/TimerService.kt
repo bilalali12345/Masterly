@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.bilal.masterly.R
+import com.bilal.masterly.Ui_Layer.MainActivity
+import com.bilal.masterly.Ui_Layer.Screen
 import com.bilal.masterly.repository.TimerRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -88,6 +90,20 @@ class TimerService : Service() {
 
     private fun buildNotification(elapsedSeconds: Long, running: Boolean): Notification {
         val content = formatTime(elapsedSeconds)
+
+        // Intent for opening the Timer screen on the click of notification body
+        val deepIntent = Intent(this ,MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("navigate_to" , Screen.Timer)
+            putExtra("skill_id" ,TimerRepository.currentSkillId.toString())
+        }
+
+        val pendingOpen = TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(deepIntent)
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+
+
         // Add PendingIntents for pause/stop actions
         val pauseIntent = Intent(this, TimerService::class.java).apply { action = ACTION_PAUSE }
         val pausePending =
@@ -101,6 +117,7 @@ class TimerService : Service() {
             .setContentTitle("Timer running")
             .setContentText(content)
             .setOngoing(running)
+            .setContentIntent(pendingOpen)
             .addAction(R.drawable.pause_24px, "Pause", pausePending)
             .addAction(R.drawable.stop_24px, "Stop", stopPending)
             .setPriority(NotificationCompat.PRIORITY_LOW)

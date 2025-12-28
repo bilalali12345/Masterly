@@ -17,6 +17,7 @@ class MyApplication : Application() {
         )
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
+        Thread.setDefaultUncaughtExceptionHandler(GlobalExceptionHandler())
 
 
 

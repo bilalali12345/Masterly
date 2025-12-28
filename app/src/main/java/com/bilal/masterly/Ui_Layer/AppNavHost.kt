@@ -69,18 +69,17 @@ fun AppNavHost(
         ) { backStackEntry ->
 
             val factory = object : AbstractSavedStateViewModelFactory(backStackEntry, null) {
-                override fun <T : ViewModel> create(
-                    key: String, modelClass: Class<T>, handle: SavedStateHandle
-                ): T {
-                    if (modelClass.isAssignableFrom(TimerViewModel::class.java)) {
-                        @Suppress("UNCHECKED_CAST")
-                        return TimerViewModel(handle) as T
-                    }
-                    throw IllegalArgumentException("Unknown ViewModel class")
+                override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
+                    val skillId = backStackEntry.arguments?.getLong("skillId")
+                    if (skillId != null) handle["skillId"] = skillId
+
+                    @Suppress("UNCHECKED_CAST")
+                    return TimerViewModel(handle) as T
                 }
             }
 
-            val timerVm = viewModel<TimerViewModel>(viewModelStoreOwner = backStackEntry, factory = factory)
+            val timerVm: TimerViewModel = viewModel(viewModelStoreOwner = backStackEntry, factory = factory)
+
             val skill by timerVm.skillFlow.collectAsState(initial = null)
 
             LaunchedEffect(key1 = timerVm) {

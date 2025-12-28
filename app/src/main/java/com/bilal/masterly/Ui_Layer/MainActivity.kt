@@ -47,6 +47,8 @@ import androidx.navigation.compose.rememberNavController
 import com.bilal.masterly.Notification.TimerService
 import com.bilal.masterly.ui.theme.MasterlyTheme
 import com.bilal.masterly.viewModel.AppViewModel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 @RequiresApi(Build.VERSION_CODES.R)
 class MainActivity : ComponentActivity() {
@@ -209,21 +211,29 @@ class MainActivity : ComponentActivity() {
 
 
                         LaunchedEffect(Unit) {
-                            appViewModel.uiEvents.collect { event ->
-                                when (event) {
-                                    UiEvent.ShowAddSkillSheet -> {
-                                        showBottomSheet = true
-                                    }
-
-                                    UiEvent.NavigateToSkillList -> {
-                                        navController.navigate("SkillListScreen") {
+                            appViewModel.uiEvents
+                                .onEach { event ->
+                                    when (event) {
+                                        UiEvent.ShowAddSkillSheet -> showBottomSheet = true
+                                        UiEvent.NavigateToSkillList -> navController.navigate("SkillListScreen") {
                                             popUpTo("AddFirstSkillScreen") { inclusive = true }
                                         }
-                                    }
 
-                                    else -> {}
+                                        else -> {}
+                                    }
+                                }
+                                .launchIn(this)
+
+                            // handle intent immediately (still in same effect)
+                            intent?.let {
+                                val destination = it.getStringExtra("navigate_to")
+                                val skillId = it.getStringExtra("skill_id")?.toLongOrNull()
+                                if (destination == Screen.Timer && skillId != null) {
+                                    navController.navigate(Screen.timer(skillId))
                                 }
                             }
+
+                            // effect will keep the launched collector alive until disposed
                         }
 
                         // Bottom sheet (single owner: App shell)

@@ -20,6 +20,8 @@ object TimerRepository {
     fun updateElapsed(sec: Long) { _elapsedSeconds.value = sec }
     fun setRunning(r: Boolean) { _isRunning.value = r }
 
+    var currentSkillId: Long? = null
+
     // Simulated DB
     private val skills = mutableListOf(
         Skill(id = 1, name = "JavaScript Development", hoursCompleted = 1500, hoursTotal = 10000),
@@ -45,7 +47,11 @@ object TimerRepository {
     )
 
     suspend fun getSkillById(id: Long): Skill? = withContext(Dispatchers.IO) {
-        skills.find { it.id == id }
+        val currentSkill = skills.find { it.id == id }
+        if (currentSkill != null) {
+            currentSkillId = currentSkill.id
+        }
+        return@withContext currentSkill
     }
 
     suspend fun updateSkill(skill: Skill) = withContext(Dispatchers.IO) {
