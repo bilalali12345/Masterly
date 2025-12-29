@@ -1,6 +1,11 @@
 package com.bilal.masterly.Notification
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
+import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -27,8 +32,11 @@ class TimerService : Service() {
         const val ACTION_START = "com.bilal.masterly.action.START_TIMER"
         const val ACTION_PAUSE = "com.bilal.masterly.action.PAUSE_TIMER"
         const val ACTION_STOP = "com.bilal.masterly.action.STOP_TIMER"
-        lateinit var timerJob: Job
+        const val ACTION_CONTINUE = "com.bilal.masterly.action.CONTINUE_TIMER"
     }
+
+    private var timerJob: Job? = null
+
 
     override fun onCreate() {
         super.onCreate()
@@ -40,34 +48,60 @@ class TimerService : Service() {
             ACTION_START -> handleStart()
             ACTION_PAUSE -> handlePause()
             ACTION_STOP -> handleStop()
+            ACTION_CONTINUE -> handleContinue()
         }
         return START_STICKY
     }
 
+    private fun handleContinue() {
+        // if already running nothing to do
+        if (TimerRepository.isRunning.value) return
+
+        // set running and start timestamp so elapsed continues where it left off
+        TimerRepository.setRunning(true)
+        TimerRepository.startTimestampMillis =
+            System.currentTimeMillis() - (TimerRepository.elapsedSeconds.value * 1000L)
+
+        startTimerLoop()
+
+        // update notification to running state immediately
+        val notif = buildNotification(TimerRepository.elapsedSeconds.value, true)
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .notify(NOTIFICATION_ID, notif)
+    }
+
+    private fun startTimerLoop() {
+        // cancel any existing job just in case
+        timerJob?.cancel()
+        timerJob = CoroutineScope(Dispatchers.Default).launch {
+            while (isActive && TimerRepository.isRunning.value) {
+                val elapsed = ((System.currentTimeMillis() - (TimerRepository.startTimestampMillis
+                    ?: System.currentTimeMillis())) / 1000L)
+                TimerRepository.updateElapsed(elapsed)
+
+                // update notification
+                val notif = buildNotification(elapsed, true)
+                (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
+                    .notify(NOTIFICATION_ID, notif)
+
+                delay(1000L)
+            }
+        }
+    }
+
     private fun handleStart() {
+        // create channel + show foreground notification
         createNotificationChannelIfNeeded()
         val notification = buildNotification(TimerRepository.elapsedSeconds.value, true)
         startForeground(NOTIFICATION_ID, notification)
 
-        // If already running, ignore
         if (TimerRepository.isRunning.value) return
 
         TimerRepository.setRunning(true)
         TimerRepository.startTimestampMillis =
             System.currentTimeMillis() - (TimerRepository.elapsedSeconds.value * 1000L)
 
-        timerJob = CoroutineScope(Dispatchers.Default).launch {
-            while (isActive && TimerRepository.isRunning.value) {
-                val elapsed = ((System.currentTimeMillis() - (TimerRepository.startTimestampMillis
-                    ?: System.currentTimeMillis())) / 1000L)
-                TimerRepository.updateElapsed(elapsed)
-                // Update notification with new time:
-                val notif = buildNotification(elapsed, true)
-                (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                    .notify(NOTIFICATION_ID, notif)
-                delay(1000L)
-            }
-        }
+        startTimerLoop()
     }
 
     private fun handlePause() {
@@ -75,7 +109,7 @@ class TimerService : Service() {
         timerJob?.cancel()
         // keep elapsedSeconds as-is; do NOT stopForeground so user still sees notification if wanted
         val notif = buildNotification(TimerRepository.elapsedSeconds.value, false)
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(
             NOTIFICATION_ID,
             notif
         )
@@ -92,10 +126,10 @@ class TimerService : Service() {
         val content = formatTime(elapsedSeconds)
 
         // Intent for opening the Timer screen on the click of notification body
-        val deepIntent = Intent(this ,MainActivity::class.java).apply {
+        val deepIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("navigate_to" , Screen.Timer)
-            putExtra("skill_id" ,TimerRepository.currentSkillId.toString())
+            putExtra("navigate_to", Screen.Timer)
+            putExtra("skill_id", TimerRepository.currentSkill?.id.toString())
         }
 
         val pendingOpen = TaskStackBuilder.create(this).run {
@@ -111,15 +145,21 @@ class TimerService : Service() {
         val stopIntent = Intent(this, TimerService::class.java).apply { action = ACTION_STOP }
         val stopPending =
             PendingIntent.getService(this, 2, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+        val continueIntent =
+            Intent(this, TimerService::class.java).apply { action = ACTION_CONTINUE }
+        val continuePending =
+            PendingIntent.getService(this, 3, continueIntent, PendingIntent.FLAG_IMMUTABLE)
+
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Timer running")
+            .setContentTitle("Timer running for ${TimerRepository.currentSkill?.name}")
             .setContentText(content)
             .setOngoing(running)
             .setContentIntent(pendingOpen)
             .addAction(R.drawable.pause_24px, "Pause", pausePending)
             .addAction(R.drawable.stop_24px, "Stop", stopPending)
+            .addAction(R.drawable.play_arrow_24px, "Continue", continuePending)
             .setPriority(NotificationCompat.PRIORITY_LOW)
 
         return builder.build()
