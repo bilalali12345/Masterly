@@ -71,9 +71,7 @@ fun AddSkillSheet(
             onAdd = {
                 onAddSkill(
                     Skill(
-                        id = System.currentTimeMillis(),
                         name = skillNameText,
-                        hoursCompleted = 0,
                         hoursTotal = skillHoursText.toIntOrNull() ?: 0
                     )
                 )

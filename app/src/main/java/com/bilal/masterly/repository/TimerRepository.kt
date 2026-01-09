@@ -1,13 +1,24 @@
 package com.bilal.masterly.repository
 
 import com.bilal.masterly.Domain_Layer.Skill
+import com.bilal.masterly.data.SkillDao
+import com.bilal.masterly.data.toDomain
+import com.bilal.masterly.data.toEntity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-object TimerRepository {
+class TimerRepository(
+    private val skillDao: SkillDao,
+    private val repoScope: CoroutineScope,
+) {
 
     private val _elapsedSeconds = MutableStateFlow(0L)
     val elapsedSeconds: StateFlow<Long> = _elapsedSeconds.asStateFlow()
@@ -25,44 +36,35 @@ object TimerRepository {
         _isRunning.value = r
     }
 
-    var currentSkill: Skill? = null
+    // HOT observable current skill
+    private val _currentSkill = MutableStateFlow<Skill?>(null)
+    val currentSkill: StateFlow<Skill?> = _currentSkill.asStateFlow()
 
-    // Simulated DB
-    private val skills = mutableListOf(
-        Skill(id = 1, name = "JavaScript Development", hoursCompleted = 1500, hoursTotal = 10000),
-        Skill(id = 2, name = "Kotlin & Compose", hoursCompleted = 120, hoursTotal = 200),
-        Skill(id = 3, name = "Android Architecture", hoursCompleted = 40, hoursTotal = 100),
-        Skill(id = 4, name = "Data Structures", hoursCompleted = 30, hoursTotal = 60),
-        Skill(id = 5, name = "UI/UX Basics", hoursCompleted = 10, hoursTotal = 20),
-        Skill(id = 6, name = "Flutter Basics", hoursCompleted = 5, hoursTotal = 10),
-        Skill(id = 7, name = "Java Basics", hoursCompleted = 3, hoursTotal = 6),
-        Skill(id = 8, name = "Python Basics", hoursCompleted = 2, hoursTotal = 4),
-        Skill(id = 9, name = "C++ Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 10, name = "Swift Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 11, name = "Go Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 12, name = "Rust Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 13, name = "PHP Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 14, name = "Ruby Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 15, name = "HTML Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 16, name = "CSS Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 17, name = "SQL Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 18, name = "NoSQL Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 19, name = "Git Basics", hoursCompleted = 1, hoursTotal = 2),
-        Skill(id = 20, name = "Docker Basics", hoursCompleted = 1, hoursTotal = 2),
-    )
+    private var currentSkillJob: Job? = null
 
-    suspend fun getSkillById(id: Long): Skill? = withContext(Dispatchers.IO) {
-        val currentSkill = skills.find { it.id == id }
-        if (currentSkill != null) {
-            TimerRepository.currentSkill = currentSkill
+    // Start watching DAO's Flow for this skill id (cancels previous collector)
+    fun setCurrentSkillId(id: Long) {
+        currentSkillJob?.cancel()
+        currentSkillJob = repoScope.launch {
+            skillDao.getSkill(id).collect { skill -> _currentSkill.value = skill?.toDomain() }
         }
-        return@withContext currentSkill
+    }
+
+    // If you prefer a one-shot load (useful when Service starts and UI not running)
+    suspend fun loadCurrentSkillOnce(id: Long) {
+        val skill = skillDao.getSkillOnce(id)
+        _currentSkill.value = skill?.toDomain()
+    }
+
+    fun getSkillById(id: Long): Flow<Skill?> {
+        setCurrentSkillId(id)
+
+        return skillDao
+            .getSkill(id)
+            .map { it?.toDomain() }
     }
 
     suspend fun updateSkill(skill: Skill) = withContext(Dispatchers.IO) {
-        val index = skills.indexOfFirst { it.id == skill.id }
-        if (index != -1) {
-            skills[index] = skill
-        }
+        skillDao.update(skill.toEntity())
     }
 }

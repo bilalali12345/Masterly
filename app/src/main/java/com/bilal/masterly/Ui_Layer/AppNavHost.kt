@@ -6,11 +6,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -68,17 +64,10 @@ fun AppNavHost(
             })
         ) { backStackEntry ->
 
-            val factory = object : AbstractSavedStateViewModelFactory(backStackEntry, null) {
-                override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
-                    val skillId = backStackEntry.arguments?.getLong("skillId")
-                    if (skillId != null) handle["skillId"] = skillId
-
-                    @Suppress("UNCHECKED_CAST")
-                    return TimerViewModel(handle) as T
-                }
-            }
-
-            val timerVm: TimerViewModel = viewModel(viewModelStoreOwner = backStackEntry, factory = factory)
+            val timerVm: TimerViewModel = viewModel(
+                viewModelStoreOwner = backStackEntry,
+                factory = TimerViewModel.Factory
+            )
 
             val skill by timerVm.skillFlow.collectAsState(initial = null)
 

@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
             MasterlyTheme {
 
                 val navController = rememberNavController()
-                val appViewModel: AppViewModel = viewModel()
+                val appViewModel: AppViewModel = viewModel( factory = AppViewModel.Factory)
 
                 var showBottomSheet by rememberSaveable { mutableStateOf(false) }
                 val isInitialized by appViewModel.isInitialized.collectAsState()

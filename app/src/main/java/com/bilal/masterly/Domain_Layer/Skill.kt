@@ -14,7 +14,7 @@ data class Skill(
     val level: Int? = null,
     val isPinned: Boolean = false,
     val startedAt: Long? = null,
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
 ) {
     /** Fractional progress 0.0..1.0 — use for LinearProgressIndicator(progress = progressFraction) */
     val progressFraction: Float
@@ -33,5 +33,6 @@ data class Skill(
         copy(hoursCompleted = completed.coerceAtLeast(0), lastUpdated = updatedAt)
 
     /** Convenience: mark skill as completed */
-    fun markComplete(): Skill = copy(hoursCompleted = hoursTotal, lastUpdated = System.currentTimeMillis())
+    fun markComplete(): Skill =
+        copy(hoursCompleted = hoursTotal, lastUpdated = System.currentTimeMillis())
 }

@@ -4,8 +4,19 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import com.bilal.masterly.data.AppDatabase
+import com.bilal.masterly.repository.SkillRepository
+import com.bilal.masterly.repository.TimerRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 
 class MyApplication : Application() {
+
+
+    private val database by lazy { AppDatabase.getDatabase(this) }
+
+    val skillRepository by lazy { SkillRepository(database.skillDao()) }
+    val timerRepository by lazy { TimerRepository(database.skillDao() , CoroutineScope(SupervisorJob() )) }
 
     override fun onCreate() {
         super.onCreate()
