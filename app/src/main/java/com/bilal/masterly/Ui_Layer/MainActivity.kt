@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity() {
                             topBar = {
                                 TopBar(
                                     onAnalyticsClick = {
-                                        navController.navigate("AnalyticsScreen")
+                                        navController.navigate(Screen.Analytics)
                                     },
                                     onSettingsClick = {
                                         navController.navigate(Screen.Settings)

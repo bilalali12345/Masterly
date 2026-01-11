@@ -13,9 +13,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.SavedStateHandle
 import com.bilal.masterly.Domain_Layer.Skill
+import com.bilal.masterly.MyApplication
+import com.bilal.masterly.data.AppDatabase
+import com.bilal.masterly.data.SkillDao
+import com.bilal.masterly.repository.TimerRepository
 import com.bilal.masterly.viewModel.TimerViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TimerPreview(modifier: Modifier = Modifier) {
+    TimerScreen(skill = null, timerVm = TimerViewModel(
+        savedStateHandle = SavedStateHandle(),
+        repo = TimerRepository(AppDatabase.getDatabase(MyApplication()).skillDao() , CoroutineScope(SupervisorJob() ))
+    ))
+}
+
 
 @Composable
 fun TimerScreen(

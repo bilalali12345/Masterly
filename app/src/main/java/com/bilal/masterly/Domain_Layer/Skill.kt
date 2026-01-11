@@ -1,6 +1,7 @@
 package com.bilal.masterly.Domain_Layer
 
 import androidx.annotation.DrawableRes
+import com.bilal.masterly.R
 import kotlin.math.roundToInt
 
 data class Skill(

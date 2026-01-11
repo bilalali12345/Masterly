@@ -2,12 +2,14 @@ package com.bilal.masterly.Ui_Layer
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,14 +22,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -38,13 +44,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bilal.masterly.Domain_Layer.Skill
 import com.bilal.masterly.R
 import java.text.SimpleDateFormat
@@ -84,7 +94,7 @@ fun TimerControls(
     onPlay: () -> Unit,
     onPause: () -> Unit,
     onStop: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
     Row(
         modifier = modifier,
@@ -119,7 +129,7 @@ fun TimerControlButton(
     modifier: Modifier = Modifier,
     size: Dp = 64.dp,
     strokeWidth: Dp = 1.5.dp,
-    isPrimary: Boolean = false
+    isPrimary: Boolean = false,
 ) {
     val color = MaterialTheme.colorScheme.primary
 
@@ -180,7 +190,7 @@ fun DifferentScreenOption(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerPopup(
-    onDateSelected: (String) -> Unit, onDismiss: () -> Unit
+    onDateSelected: (String) -> Unit, onDismiss: () -> Unit,
 ) {
     val datePickerState = rememberDatePickerState()
 
@@ -232,7 +242,7 @@ fun ActionRow(onCancel: () -> Unit, onAdd: () -> Unit) {
 
 @Composable
 fun DeadlineField(
-    value: String, onClick: () -> Unit
+    value: String, onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -392,6 +402,83 @@ fun SkillCard(
                     .padding(top = 6.dp)
                     .clip(RoundedCornerShape(50))
             )
+        }
+    }
+}
+
+@Composable
+fun PillBtn(
+    @DrawableRes icon: Int,
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    height: Dp = 44.dp, // make height configurable
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    borderColor: Color = MaterialTheme.colorScheme.primary
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(height), // use the passed height
+        shape = RoundedCornerShape(18.dp),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        border = BorderStroke(width = 1.dp, color = borderColor),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = text,
+            tint = LocalContentColor.current,
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            color = LocalContentColor.current,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+fun GradientButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = Icons.Default.Timer,
+    onClick: () -> Unit,
+    gradient: Brush = Brush.horizontalGradient(listOf(Color(0xFF4C1D71), Color(0xFF7C3AED))),
+    cornerRadius: Dp = 20.dp,
+    height: Dp = 44.dp // make height configurable
+) {
+    val shape = RoundedCornerShape(cornerRadius)
+
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(height) // use the passed height
+            .clip(shape)
+            .background(brush = gradient, shape = shape)
+            .shadow(elevation = 6.dp, shape = shape),
+        shape = shape,
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+
+            Text(text = text, style = MaterialTheme.typography.labelLarge, color = Color.White)
         }
     }
 }

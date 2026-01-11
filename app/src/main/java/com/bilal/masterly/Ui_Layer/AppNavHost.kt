@@ -6,12 +6,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.bilal.masterly.MyApplication
 import com.bilal.masterly.viewModel.AppViewModel
 import com.bilal.masterly.viewModel.SkillDetailViewModel
 import com.bilal.masterly.viewModel.TimerViewModel
@@ -90,11 +95,15 @@ fun AppNavHost(
                 nullable = false
             })
         ) { backStackEntry ->
-            val detailVm: SkillDetailViewModel = viewModel(backStackEntry)
+
+            val detailVm: SkillDetailViewModel = viewModel(viewModelStoreOwner = backStackEntry ,factory = SkillDetailViewModel.Factory)
             val skill by detailVm.skillFlow.collectAsState(initial = null)
             SkillDetailScreen(
-                skill = skill,
-                onBack = { navController.popBackStack() })
+                skill = skill, onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize(),
+                onEdit = {},
+                onDelete = { detailVm.deleteCurrentSkill() }
+            )
         }
 
         composable(Screen.Paywall) {
@@ -105,5 +114,8 @@ fun AppNavHost(
             SettingsScreen()
         }
 
+        composable(Screen.Analytics) {
+            AnalyticsScreen()
+        }
     }
 }
