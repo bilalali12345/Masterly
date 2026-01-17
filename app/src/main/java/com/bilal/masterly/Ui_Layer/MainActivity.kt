@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
             MasterlyTheme {
 
                 val navController = rememberNavController()
-                val appViewModel: AppViewModel = viewModel( factory = AppViewModel.Factory)
+                val appViewModel: AppViewModel = viewModel(factory = AppViewModel.Factory)
 
                 var showBottomSheet by rememberSaveable { mutableStateOf(false) }
                 val isInitialized by appViewModel.isInitialized.collectAsState()
@@ -170,13 +170,19 @@ class MainActivity : ComponentActivity() {
                             topBar = {
                                 TopBar(
                                     onAnalyticsClick = {
-                                        navController.navigate(Screen.Analytics)
+                                        navController.navigate(Screen.Analytics) {
+                                            launchSingleTop = true
+                                        }
                                     },
                                     onSettingsClick = {
-                                        navController.navigate(Screen.Settings)
+                                        navController.navigate(Screen.Settings) {
+                                            launchSingleTop = true
+                                        }
                                     },
                                     onProClick = {
-                                        navController.navigate(Screen.Paywall)
+                                        navController.navigate(Screen.Paywall) {
+                                            launchSingleTop = true
+                                        }
                                     }
                                 )
                             },

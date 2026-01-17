@@ -101,6 +101,13 @@ fun AppNavHost(
             SkillDetailScreen(
                 skill = skill, onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize(),
+                onCallTimerStart = { id ->
+                    navController.navigate(
+                        Screen.timer(
+                            id
+                        )
+                    )
+                },
                 onEdit = {},
                 onDelete = { detailVm.deleteCurrentSkill() }
             )

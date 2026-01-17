@@ -81,7 +81,7 @@ val tabItems = listOf(
 fun SkillDetailScreen(
     skill: Skill?,
     modifier: Modifier = Modifier,
-    onCallTimerStart: () -> Unit = {},
+    onCallTimerStart: (id : Long) -> Unit = {},
     onBack: () -> Unit = {},
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {},
@@ -222,7 +222,7 @@ fun SkillDetailScreen(
                 GradientButton(
                     text = "Start Timer",
                     icon = Icons.Default.Timer,
-                    onClick = onCallTimerStart,
+                    onClick = { onCallTimerStart(skill?.id ?: -1) },
                     modifier = Modifier.weight(1f),
                     height = 44.dp
                 )
