@@ -3,6 +3,7 @@ package com.bilal.masterly.Ui_Layer
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,11 +13,15 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +54,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -58,6 +65,8 @@ import androidx.compose.ui.unit.sp
 import com.bilal.masterly.Domain_Layer.Skill
 import com.bilal.masterly.R
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.YearMonth
 import java.util.Date
 import java.util.Locale
 
@@ -483,3 +492,130 @@ fun GradientButton(
     }
 }
 
+
+
+@Composable
+fun MonthCalendar(
+    yearMonth: YearMonth,
+    practicedDates: Set<LocalDate>,
+    modifier: Modifier = Modifier,
+    cellSize: Dp = 48.dp,
+    onDateClick: (LocalDate) -> Unit = {}
+) {
+    val today = LocalDate.now()
+    val firstOfMonth = yearMonth.atDay(1)
+
+    // If you prefer Monday-first, change this logic:
+    // val offset = (firstOfMonth.dayOfWeek.value + 6) % 7 // Monday-first
+    val offset = firstOfMonth.dayOfWeek.value % 7 // Sunday-first: Sunday -> 0
+
+    val daysInMonth = yearMonth.lengthOfMonth()
+    val totalCells = 7 * 6 // 6 rows ensures consistent layout
+
+    Column(modifier = modifier) {
+        // Weekday header
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("S","M","T","W","T","F","S").forEach { wd ->
+                Box(
+                    modifier = Modifier
+                        .size(cellSize)
+                        .padding(vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.Text(
+                        wd,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Grid of day cells
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            modifier = Modifier.height((cellSize * 6) + 8.dp), // fixed height for 6 rows
+            userScrollEnabled = false,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            content = {
+                items((0 until totalCells).toList()) { index ->
+                    val dayNumber = index - offset + 1
+                    if (dayNumber in 1..daysInMonth) {
+                        val date = yearMonth.atDay(dayNumber)
+                        DayCell(
+                            date = date,
+                            isToday = date == today,
+                            practiced = practicedDates.contains(date),
+                            size = cellSize,
+                            onClick = { onDateClick(date) }
+                        )
+                    } else {
+                        // empty placeholder
+                        Box(modifier = Modifier.size(cellSize))
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun DayCell(
+    date: LocalDate,
+    isToday: Boolean,
+    practiced: Boolean,
+    size: Dp,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(8.dp)
+    Box(
+        modifier = Modifier
+            .size(size)
+            .padding(4.dp)
+            .clip(shape)
+            .semantics { contentDescription = "Day ${date.dayOfMonth}" }
+            .clickable { onClick() },
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Day number with optional today highlight
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .then(
+                        if (isToday) Modifier
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f))
+                            .border(1.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        else Modifier
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Text(
+                    text = date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (isToday) FontWeight.SemiBold else FontWeight.Normal,
+                    fontSize = 13.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // small practiced indicator (dot)
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (practiced) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surfaceVariant
+                    )
+            )
+        }
+    }
+}

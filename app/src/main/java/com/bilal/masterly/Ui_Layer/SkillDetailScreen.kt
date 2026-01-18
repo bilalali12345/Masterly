@@ -23,15 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -274,9 +268,31 @@ fun SkillDetailScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) { page ->
-                Text(text = "Page ${tabItems[page]}")
+                when (page) {
+                    0 -> OverviewScreen(skill = skill)
+                    1 -> SessionsScreen(skill = skill)
+                    2 -> Analytics(skill = skill)
+                    3 -> MilestonesScreen(skill = skill)
+                }
             }
         }
     }
 }
+
+@Composable
+fun Analytics(skill: Skill?) {
+
+}
+
+@Composable
+fun MilestonesScreen(skill: Skill?) {
+
+}
+
+@Composable
+fun SessionsScreen(skill: Skill?) {
+
+}
+
+
 
