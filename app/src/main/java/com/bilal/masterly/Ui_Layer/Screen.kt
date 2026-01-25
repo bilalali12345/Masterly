@@ -1,6 +1,7 @@
 package com.bilal.masterly.Ui_Layer
 
 object Screen {
+    const val QuickLog = "QuickLogScreen"
     const val SkillList = "SkillListScreen"
     const val AddFirst = "AddFirstSkillScreen"
     const val Paywall = "PaywallScreen"

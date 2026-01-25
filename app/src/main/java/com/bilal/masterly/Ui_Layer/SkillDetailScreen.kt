@@ -25,7 +25,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +88,8 @@ fun SkillDetailScreen(
 
     val pagerState = rememberPagerState { tabItems.size }
     val scope = rememberCoroutineScope()
+
+    var showQuickLog by remember { mutableStateOf(false) }
 
     // Use theme background
     Surface(
@@ -226,7 +232,7 @@ fun SkillDetailScreen(
                 PillBtn(
                     icon = R.drawable.baseline_menu_book_24,
                     text = "Quick Log",
-                    onClick = { /*TODO*/ },
+                    onClick = { showQuickLog = true },
                     modifier = Modifier.weight(1f),
                     height = 44.dp
                 )
@@ -276,6 +282,9 @@ fun SkillDetailScreen(
                 }
             }
         }
+    }
+    if (showQuickLog) {
+        QuickLogScreen(skill = skill, onClose = { showQuickLog = false })
     }
 }
 
